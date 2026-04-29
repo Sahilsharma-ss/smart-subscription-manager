@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState } from "react";
 
 const AuthContext = createContext(null);
-
+ // AuthProvider Wraps  entire app Provides auth data to all components
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(() => {

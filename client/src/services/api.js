@@ -1,3 +1,4 @@
+// this used to automatically attach the jwt token with ea h request
 import axios from "axios";
 
 const api = axios.create({

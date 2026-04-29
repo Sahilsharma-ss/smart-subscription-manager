@@ -1,5 +1,5 @@
 import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "react-hot-toast"; //Used for notifications (toast messages)  like toast.success("Login successful");
 import { useAuth } from "./context/AuthContext.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Landing from "./pages/Landing.jsx";
@@ -44,7 +44,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        <Route element={<ProtectedLayout />}>
+        <Route element={<ProtectedLayout />}>  // all the components inside it is protected needs authentication 
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/subscriptions" element={<Subscriptions />} />
           <Route path="/subscriptions/new" element={<AddSubscription />} />

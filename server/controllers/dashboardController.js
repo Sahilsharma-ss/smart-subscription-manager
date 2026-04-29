@@ -1,72 +1,82 @@
+import { performance } from "node:perf_hooks";
 import { pool } from "../db/db.js";
+
+const timedQuery = async (label, text, params) => {
+  const start = performance.now();
+  const result = await pool.query(text, params);
+  const durationMs = Math.round(performance.now() - start);
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[dashboard] ${label} ${durationMs}ms`);
+  }
+  return result;
+};
 
 export const getDashboard = async (req, res) => {
   try {
     const userId = req.user.userId;
     const [
-      totalActiveRes,
-      monthlyTotalRes,
+      aggregateRes,
       upcomingRes,
-      financialExposureRes,
       unusedRes,
       currencyRes,
       surveyUnusedRes,
     ] = await Promise.all([
-      pool.query(
-        "SELECT COUNT(*) FROM subscriptions WHERE user_id = $1 AND status = 'active'",
-        [userId]
-      ),
-      pool.query(
+      timedQuery(
+        "aggregate",
         `
-        SELECT COALESCE(SUM(
-          CASE WHEN billing_cycle = 'yearly' THEN price / 12
-               WHEN billing_cycle = 'quarterly' THEN price / 3
-               ELSE price END
-        ), 0) AS monthly_total
+        SELECT
+          COUNT(*) FILTER (WHERE status = 'active') AS total_active,
+          COALESCE(SUM(
+            CASE WHEN status = 'active' THEN
+              CASE WHEN billing_cycle = 'yearly' THEN price / 12
+                   WHEN billing_cycle = 'quarterly' THEN price / 3
+                   ELSE price END
+            END
+          ), 0) AS monthly_total,
+          COUNT(*) FILTER (
+            WHERE renewal_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '7 days')
+          ) AS upcoming_count,
+          COALESCE(SUM(price) FILTER (
+            WHERE renewal_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '30 days')
+          ), 0) AS exposure
         FROM subscriptions
-        WHERE user_id = $1 AND status = 'active'
+        WHERE user_id = $1
         `,
         [userId]
       ),
-      pool.query(
+      timedQuery(
+        "upcoming_renewals",
         `
         SELECT s.subscription_id, s.renewal_date, s.price, s.currency, s.status,
                srv.name AS service_name, sp.plan_name,
                GREATEST(0, (s.renewal_date - CURRENT_DATE)) AS days_left
         FROM subscriptions s
         JOIN services srv ON srv.service_id = s.service_id
-        JOIN subscription_plans sp ON sp.plan_id = s.plan_id
+        LEFT JOIN subscription_plans sp ON sp.plan_id = s.plan_id
         WHERE s.user_id = $1
           AND s.renewal_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '7 days')
         ORDER BY s.renewal_date ASC
         `,
         [userId]
       ),
-      pool.query(
-        `
-        SELECT COALESCE(SUM(price), 0) AS exposure
-        FROM subscriptions
-        WHERE user_id = $1
-          AND renewal_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '30 days')
-        `,
-        [userId]
-      ),
-      pool.query(
+      timedQuery(
+        "unused_count",
         `
         SELECT COUNT(*) AS unused_count
         FROM subscriptions s
-        LEFT JOIN (
-          SELECT subscription_id, MAX(usage_date) AS last_usage
-          FROM usage_logs
-          GROUP BY subscription_id
-        ) ul ON ul.subscription_id = s.subscription_id
         WHERE s.user_id = $1
-          AND (ul.last_usage IS NULL OR ul.last_usage < (CURRENT_DATE - INTERVAL '30 days'))
+          AND NOT EXISTS (
+            SELECT 1
+            FROM usage_logs ul
+            WHERE ul.subscription_id = s.subscription_id
+              AND ul.usage_date >= (CURRENT_DATE - INTERVAL '30 days')
+          )
         `,
         [userId]
       ),
-      pool.query("SELECT currency FROM users WHERE user_id = $1", [userId]),
-      pool.query(
+      timedQuery("currency", "SELECT currency FROM users WHERE user_id = $1", [userId]),
+      timedQuery(
+        "survey_unused",
         `
         SELECT s.subscription_id,
                s.price,
@@ -77,7 +87,7 @@ export const getDashboard = async (req, res) => {
                ul.usage_date
         FROM subscriptions s
         JOIN services srv ON srv.service_id = s.service_id
-        JOIN subscription_plans sp ON sp.plan_id = s.plan_id
+        LEFT JOIN subscription_plans sp ON sp.plan_id = s.plan_id
         JOIN LATERAL (
           SELECT usage_date, usage_value
           FROM usage_logs
@@ -94,12 +104,14 @@ export const getDashboard = async (req, res) => {
       ),
     ]);
 
+    const aggregate = aggregateRes.rows[0] || {};
+
     return res.json({
-      totalActive: Number(totalActiveRes.rows[0].count),
-      monthlyTotal: Number(monthlyTotalRes.rows[0].monthly_total),
+      totalActive: Number(aggregate.total_active || 0),
+      monthlyTotal: Number(aggregate.monthly_total || 0),
       upcomingRenewals: upcomingRes.rows,
-      upcomingCount: upcomingRes.rows.length,
-      financialExposure: Number(financialExposureRes.rows[0].exposure),
+      upcomingCount: Number(aggregate.upcoming_count || 0),
+      financialExposure: Number(aggregate.exposure || 0),
       unusedCount: Number(unusedRes.rows[0].unused_count),
       currency: currencyRes.rows[0]?.currency || "INR",
       surveyUnused: surveyUnusedRes.rows,

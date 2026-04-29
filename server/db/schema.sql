@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_status ON subscriptions(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_renewal ON subscriptions(user_id, renewal_date);
 
 CREATE TABLE IF NOT EXISTS alerts (
   alert_id SERIAL PRIMARY KEY,
@@ -88,6 +90,9 @@ CREATE TABLE IF NOT EXISTS usage_logs (
   usage_value VARCHAR(100),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_usage_logs_subscription_date ON usage_logs(subscription_id, usage_date DESC);
+CREATE INDEX IF NOT EXISTS idx_usage_logs_survey_lookup ON usage_logs(subscription_id, usage_type, usage_value, usage_date DESC);
 
 INSERT INTO categories (name, description, risk_level)
 VALUES

@@ -69,7 +69,7 @@ const createAlerts = async () => {
 };
 
 export const startReminderJob = () => {
-  cron.schedule("0 0 * * *", async () => {
+  cron.schedule("25 1 * * *", async () => {
     try {
       await createAlerts();
     } catch (error) {
