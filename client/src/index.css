@@ -1,0 +1,25 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --app-bg: #f7f4ee;
+  --app-surface: #ffffff;
+  --app-ink: #1c1917;
+  --app-muted: #6b6b60;
+  --app-border: #e7e2d8;
+  --app-accent: #0f766e;
+}
+
+body {
+  font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  background: var(--app-bg);
+  color: var(--app-ink);
+}
+
+.font-display {
+  font-family: "Fraunces", "Space Grotesk", serif;
+}
