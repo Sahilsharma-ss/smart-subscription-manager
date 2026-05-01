@@ -1,7 +1,7 @@
 import { performance } from "node:perf_hooks";
 import { pool } from "../db/db.js";
 
-const timedQuery = async (label, text, params) => {
+const timedQuery = async (label, text, params) => {  //runs sql query and measure execution time
   const start = performance.now();
   const result = await pool.query(text, params);
   const durationMs = Math.round(performance.now() - start);
@@ -11,7 +11,7 @@ const timedQuery = async (label, text, params) => {
   return result;
 };
 
-export const getDashboard = async (req, res) => {
+export const getDashboard = async (req, res) => {    //main API
   try {
     const userId = req.user.userId;
     const [
@@ -20,14 +20,14 @@ export const getDashboard = async (req, res) => {
       unusedRes,
       currencyRes,
       surveyUnusedRes,
-    ] = await Promise.all([
+    ] = await Promise.all([   //runs all queries simultaneously
       timedQuery(
         "aggregate",
         `
         SELECT
-          COUNT(*) FILTER (WHERE status = 'active') AS total_active,
+          COUNT(*) FILTER (WHERE status = 'active') AS total_active,   //count active subscription
           COALESCE(SUM(
-            CASE WHEN status = 'active' THEN
+            CASE WHEN status = 'active' THEN               //calculates monthly cost
               CASE WHEN billing_cycle = 'yearly' THEN price / 12
                    WHEN billing_cycle = 'quarterly' THEN price / 3
                    ELSE price END
@@ -37,7 +37,7 @@ export const getDashboard = async (req, res) => {
             WHERE renewal_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '7 days')
           ) AS upcoming_count,
           COALESCE(SUM(price) FILTER (
-            WHERE renewal_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '30 days')
+            WHERE renewal_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '30 days')   //money to be spend in a month
           ), 0) AS exposure
         FROM subscriptions
         WHERE user_id = $1

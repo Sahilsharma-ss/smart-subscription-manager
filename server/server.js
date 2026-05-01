@@ -9,7 +9,7 @@ import dashboardRoutes from "./routes/dashboardRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
 import usageLogRoutes from "./routes/usageLogRoutes.js";
 import metadataRoutes from "./routes/metadataRoutes.js";
-import { startReminderJob } from "./scheduler/reminderJob.js";
+import { startReminderJob } from "./scheduler/reminderJob.js";  //start background jobs
 import { startSurveyJob } from "./scheduler/surveyJob.js";
 
 const app = express();

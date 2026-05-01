@@ -12,19 +12,19 @@ export const getAlerts = async (req, res) => {
              s.renewal_date,
              srv.name AS service_name,
              cat.name AS category_name,
-             GREATEST(0, (s.renewal_date - CURRENT_DATE)) AS days_left
+             GREATEST(0, (s.renewal_date - CURRENT_DATE)) AS days_left  //if renew date passed show 0
       FROM notifications n
-      JOIN alerts a ON a.alert_id = n.alert_id
+      JOIN alerts a ON a.alert_id = n.alert_id  //combine all tables
       JOIN subscriptions s ON s.subscription_id = a.subscription_id
       JOIN services srv ON srv.service_id = s.service_id
       JOIN categories cat ON cat.category_id = s.category_id
       WHERE n.user_id = $1
-      ORDER BY a.alert_date ASC
+      ORDER BY a.alert_date ASC  //oldest alert first
       `,
       [req.user.userId]
     );
 
-    return res.json({ alerts: result.rows });
+    return res.json({ alerts: result.rows });  //send all alert to frontend
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Failed to fetch alerts" });

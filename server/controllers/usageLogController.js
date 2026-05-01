@@ -1,6 +1,6 @@
 import { pool } from "../db/db.js";
 
-export const createUsageLog = async (req, res) => {
+export const createUsageLog = async (req, res) => {  //create usage record
   const subscriptionId = Number(req.params.subscriptionId);
   const { usageDate, usageType, usageValue } = req.body;
 

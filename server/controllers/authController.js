@@ -1,10 +1,10 @@
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";    //import hash password
+import jwt from "jsonwebtoken";  //imports login token
 import { pool } from "../db/db.js";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const register = async (req, res) => {
+export const register = async (req, res) => {        //creates new user
   const { name, email, password, phone, currency, timezone } = req.body;
 
   if (!name || !email || !password) {
@@ -25,7 +25,7 @@ export const register = async (req, res) => {
       return res.status(409).json({ message: "User already exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);   //convert pass into secure hash pass
     const insertResult = await pool.query(
       `
       INSERT INTO users (name, email, password_hash, phone, currency, timezone)
@@ -37,7 +37,7 @@ export const register = async (req, res) => {
 
     const user = insertResult.rows[0];
     const token = jwt.sign({ userId: user.user_id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
+      expiresIn: "7d",   //create login token valid for 7 days
     });
 
     return res.status(201).json({ message: "Registered", token, user });
@@ -61,7 +61,7 @@ export const login = async (req, res) => {
     }
 
     const user = result.rows[0];
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    const isMatch = await bcrypt.compare(password, user.password_hash);   //compare entered pass and hashed pass in db
 
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid email or password" });

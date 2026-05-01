@@ -1,6 +1,6 @@
 import { pool } from "../db/db.js";
 
-const isPossiblyUnused = (lastUsageDate) => {
+const isPossiblyUnused = (lastUsageDate) => {   //check whether subscription is unused
   if (!lastUsageDate) return true;
   const today = new Date();
   const lastUsed = new Date(lastUsageDate);
@@ -8,12 +8,12 @@ const isPossiblyUnused = (lastUsageDate) => {
   return diffDays > 30;
 };
 
-export const getSubscriptions = async (req, res) => {
+export const getSubscriptions = async (req, res) => {  //fetch all subs of logged in user
   try {
     const result = await pool.query(
       `
       SELECT s.*, srv.name AS service_name, cat.name AS category_name, sp.plan_name,
-              MAX(ul.usage_date) AS last_usage_date
+              MAX(ul.usage_date) AS last_usage_date    //find last used date and add field if unused
       FROM subscriptions s
       JOIN services srv ON srv.service_id = s.service_id
       JOIN categories cat ON cat.category_id = s.category_id
@@ -64,7 +64,7 @@ export const getSubscriptionById = async (req, res) => {
   }
 };
 
-export const createSubscription = async (req, res) => {
+export const createSubscription = async (req, res) => { 
   const {
     serviceId,
     planId,
