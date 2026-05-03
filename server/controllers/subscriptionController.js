@@ -13,7 +13,7 @@ export const getSubscriptions = async (req, res) => {  //fetch all subs of logge
     const result = await pool.query(
       `
       SELECT s.*, srv.name AS service_name, cat.name AS category_name, sp.plan_name,
-              MAX(ul.usage_date) AS last_usage_date    //find last used date and add field if unused
+              MAX(ul.usage_date) AS last_usage_date    --find last used date and add field if unused
       FROM subscriptions s
       JOIN services srv ON srv.service_id = s.service_id
       JOIN categories cat ON cat.category_id = s.category_id

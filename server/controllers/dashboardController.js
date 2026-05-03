@@ -27,7 +27,7 @@ export const getDashboard = async (req, res) => {    //main API
         SELECT
           COUNT(*) FILTER (WHERE status = 'active') AS total_active,   //count active subscription
           COALESCE(SUM(
-            CASE WHEN status = 'active' THEN               //calculates monthly cost
+            CASE WHEN status = 'active' THEN               --calculates monthly cost
               CASE WHEN billing_cycle = 'yearly' THEN price / 12
                    WHEN billing_cycle = 'quarterly' THEN price / 3
                    ELSE price END
@@ -37,7 +37,7 @@ export const getDashboard = async (req, res) => {    //main API
             WHERE renewal_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '7 days')
           ) AS upcoming_count,
           COALESCE(SUM(price) FILTER (
-            WHERE renewal_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '30 days')   //money to be spend in a month
+            WHERE renewal_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '30 days')   --money to be spend in a month
           ), 0) AS exposure
         FROM subscriptions
         WHERE user_id = $1
