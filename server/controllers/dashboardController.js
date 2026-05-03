@@ -25,7 +25,7 @@ export const getDashboard = async (req, res) => {    //main API
         "aggregate",
         `
         SELECT
-          COUNT(*) FILTER (WHERE status = 'active') AS total_active,   //count active subscription
+          COUNT(*) FILTER (WHERE status = 'active') AS total_active,   --count active subscription
           COALESCE(SUM(
             CASE WHEN status = 'active' THEN               --calculates monthly cost
               CASE WHEN billing_cycle = 'yearly' THEN price / 12
