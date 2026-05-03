@@ -1,4 +1,4 @@
-import cron from "node-cron";
+import cron from "node-cron";   //to run daily automatically
 import { pool } from "../db/db.js";
 import { sendEmail } from "../services/mailer.js";
 
@@ -19,7 +19,7 @@ const createAlerts = async () => {
     `
   );
 
-  for (const row of upcoming.rows) {
+  for (const row of upcoming.rows) {    //avoid duplicate alert
     const existing = await pool.query(
       `
       SELECT 1 FROM alerts
@@ -69,7 +69,7 @@ const createAlerts = async () => {
 };
 
 export const startReminderJob = () => {
-  cron.schedule("25 1 * * *", async () => {
+  cron.schedule("8 15 * * *", async () => {
     try {
       await createAlerts();
     } catch (error) {
